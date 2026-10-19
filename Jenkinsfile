@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_USER  = 'YOUR_DOCKERHUB_USERNAME'
+        DOCKERHUB_USER  = '05ace'
         IMAGE           = "${DOCKERHUB_USER}/todo-devops"
         DOCKERHUB_CREDS = credentials('dockerhub-creds')
     }
