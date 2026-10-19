@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>To-Do DevOps App</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 500px; margin: 40px auto; padding: 0 12px; }
+    form.add { display: flex; gap: 8px; margin-bottom: 20px; }
+    form.add input { flex: 1; padding: 8px; }
+    button { padding: 8px 12px; cursor: pointer; }
+    li { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #ddd; }
+    ul { list-style: none; padding: 0; }
+  </style>
+</head>
+<body>
+  <h1>To-Do App (DevOps v1)</h1>
+  <form class="add" action="/add" method="post">
+    <input type="text" name="title" placeholder="New task" required>
+    <button type="submit">Add</button>
+  </form>
+  <ul>
+    {% for t in tasks %}
+    <li>
+      <span>{{ t.title }}</span>
+      <form action="/delete/{{ t.id }}" method="post"><button type="submit">Delete</button></form>
+    </li>
+    {% else %}
+    <li>No tasks yet.</li>
+    {% endfor %}
+  </ul>
+</body>
+</html>
