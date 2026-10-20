@@ -44,7 +44,3 @@ def test_api_tasks(client):
 def test_metrics_endpoint(client):
     response = client.get("/metrics")
     assert response.status_code == 200
-
-
-def test_deliberate_fail():
-    assert 1 == 2
