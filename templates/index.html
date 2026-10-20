@@ -1,33 +1,125 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Agile Task Tracker</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 500px; margin: 40px auto; padding: 0 12px; }
-    form.add { display: flex; gap: 8px; margin-bottom: 20px; }
-    form.add input { flex: 1; padding: 8px; }
-    button { padding: 8px 12px; cursor: pointer; }
-    li { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #ddd; }
-    ul { list-style: none; padding: 0; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; background: #f4f6fb; color: #1f2937; }
+    header { background: #1e3a8a; color: #fff; padding: 22px 28px; }
+    header h1 { margin: 0; font-size: 26px; }
+    header p { margin: 4px 0 0; opacity: .85; font-size: 14px; }
+    .wrap { max-width: 1150px; margin: 0 auto; padding: 20px; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 14px; }
+    .stat { background: #fff; border-radius: 10px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .stat .num { font-size: 26px; font-weight: 700; }
+    .stat .lbl { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: .04em; }
+    .stat.over .num { color: #dc2626; }
+    .progress { background: #e5e7eb; border-radius: 999px; height: 12px; overflow: hidden; margin-bottom: 4px; }
+    .progress div { background: #16a34a; height: 100%; }
+    .ptext { font-size: 13px; color: #6b7280; margin-bottom: 18px; }
+    form.add, form.filters { background: #fff; border-radius: 10px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.08); display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    input, select, button { font: inherit; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; }
+    input[name=title] { flex: 2; min-width: 160px; }
+    input[name=description], input[name=q] { flex: 3; min-width: 160px; }
+    button { cursor: pointer; background: #fff; }
+    button.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+    a.clear { align-self: center; font-size: 14px; color: #2563eb; text-decoration: none; }
+    .board { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 14px; }
+    .col { background: #e8ecf5; border-radius: 10px; padding: 12px; min-height: 120px; }
+    .col h2 { margin: 0 0 10px; font-size: 15px; display: flex; justify-content: space-between; }
+    .count { background: #fff; border-radius: 999px; padding: 0 9px; font-size: 13px; }
+    .card { background: #fff; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; box-shadow: 0 1px 2px rgba(0,0,0,.08); border-left: 4px solid #9ca3af; }
+    .card.High { border-left-color: #dc2626; }
+    .card.Medium { border-left-color: #f59e0b; }
+    .card.Low { border-left-color: #16a34a; }
+    .card .title { font-weight: 600; }
+    .card .desc { font-size: 13px; color: #6b7280; margin: 3px 0; }
+    .meta { font-size: 12px; margin: 6px 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .badge { padding: 1px 8px; border-radius: 999px; color: #fff; font-size: 11px; }
+    .badge.High { background: #dc2626; } .badge.Medium { background: #f59e0b; } .badge.Low { background: #16a34a; }
+    .due.late { color: #dc2626; font-weight: 600; }
+    .actions { display: flex; gap: 6px; }
+    .actions form { margin: 0; }
+    .actions button { padding: 3px 9px; font-size: 12px; }
+    .actions button.del { color: #dc2626; border-color: #fca5a5; }
+    .empty { font-size: 13px; color: #9ca3af; text-align: center; padding: 10px 0; }
+    footer { text-align: center; font-size: 12px; color: #6b7280; padding: 18px; }
+    footer a { color: #2563eb; }
   </style>
 </head>
 <body>
-  <h1>Agile Task Tracker</h1>
-  <form class="add" action="/add" method="post">
-    <input type="text" name="title" placeholder="New task" required>
-    <button type="submit">Add</button>
-  </form>
-  <ul>
-    {% for t in tasks %}
-    <li>
-      <span>{{ t.title }}</span>
-      <form action="/delete/{{ t.id }}" method="post"><button type="submit">Delete</button></form>
-    </li>
-    {% else %}
-    <li>No tasks yet.</li>
-    {% endfor %}
-  </ul>
+  <header>
+    <h1>Agile Task Tracker</h1>
+    <p>Plan, prioritise and track your sprint tasks from To Do to Done</p>
+  </header>
+
+  <div class="wrap">
+    <section class="stats">
+      <div class="stat"><div class="num">{{ stats.total }}</div><div class="lbl">Total tasks</div></div>
+      <div class="stat"><div class="num">{{ stats.counts['To Do'] }}</div><div class="lbl">To Do</div></div>
+      <div class="stat"><div class="num">{{ stats.counts['In Progress'] }}</div><div class="lbl">In Progress</div></div>
+      <div class="stat"><div class="num">{{ stats.counts['Done'] }}</div><div class="lbl">Done</div></div>
+      <div class="stat over"><div class="num">{{ stats.overdue }}</div><div class="lbl">Overdue</div></div>
+    </section>
+    <div class="progress"><div style="width: {{ stats.percent_done }}%"></div></div>
+    <div class="ptext">{{ stats.percent_done }}% of tasks completed</div>
+
+    <form class="add" action="/add" method="post">
+      <input type="text" name="title" placeholder="Task title" required>
+      <input type="text" name="description" placeholder="Description (optional)">
+      <select name="priority">
+        {% for p in priorities %}<option value="{{ p }}" {% if p == 'Medium' %}selected{% endif %}>{{ p }} priority</option>{% endfor %}
+      </select>
+      <input type="date" name="due_date" title="Due date">
+      <button class="primary" type="submit">Add task</button>
+    </form>
+
+    <form class="filters" action="/" method="get">
+      <input type="text" name="q" placeholder="Search tasks" value="{{ q }}">
+      <select name="priority">
+        <option value="">All priorities</option>
+        {% for p in priorities %}<option value="{{ p }}" {% if p == selected_priority %}selected{% endif %}>{{ p }}</option>{% endfor %}
+      </select>
+      <button type="submit">Filter</button>
+      <a class="clear" href="/">Clear</a>
+    </form>
+
+    <main class="board">
+      {% for status in statuses %}
+      {% set idx = loop.index0 %}
+      <div class="col">
+        <h2>{{ status }} <span class="count">{{ board[status]|length }}</span></h2>
+        {% for t in board[status] %}
+        <div class="card {{ t.priority }}">
+          <div class="title">{{ t.title }}</div>
+          {% if t.description %}<div class="desc">{{ t.description }}</div>{% endif %}
+          <div class="meta">
+            <span class="badge {{ t.priority }}">{{ t.priority }}</span>
+            {% if t.due_date %}<span class="due {% if t.overdue %}late{% endif %}">Due {{ t.due_date }}{% if t.overdue %} (overdue){% endif %}</span>{% endif %}
+          </div>
+          <div class="actions">
+            {% if idx > 0 %}
+            <form action="{{ url_for('move_task', task_id=t.id, status=statuses[idx-1]) }}" method="post"><button type="submit">&larr; {{ statuses[idx-1] }}</button></form>
+            {% endif %}
+            {% if idx < statuses|length - 1 %}
+            <form action="{{ url_for('move_task', task_id=t.id, status=statuses[idx+1]) }}" method="post"><button type="submit">{{ statuses[idx+1] }} &rarr;</button></form>
+            {% endif %}
+            <form action="{{ url_for('delete_task', task_id=t.id) }}" method="post"><button class="del" type="submit">Delete</button></form>
+          </div>
+        </div>
+        {% else %}
+        <div class="empty">No tasks here</div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </main>
+  </div>
+
+  <footer>
+    Agile Task Tracker v2.0 &middot; Flask &middot; Jenkins &middot; Docker &middot; Prometheus &middot; Grafana
+    &middot; <a href="/api/tasks">API</a> &middot; <a href="/health">Health</a> &middot; <a href="/metrics">Metrics</a>
+  </footer>
 </body>
 </html>

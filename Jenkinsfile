@@ -7,6 +7,10 @@ pipeline {
         DOCKERHUB_CREDS = credentials('dockerhub-creds')
     }
 
+    options {
+        disableConcurrentBuilds()
+    }
+
     triggers {
         pollSCM('H/2 * * * *')
     }
@@ -54,7 +58,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh 'docker rm -f todo-app || true'
-                sh "docker run -d --name todo-app --network devops-net -p 5000:5000 ${IMAGE}:latest"
+                sh "docker run -d --name todo-app --network devops-net -p 5000:5000 -v todo-data:/data ${IMAGE}:latest"
             }
         }
     }
